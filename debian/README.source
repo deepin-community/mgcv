@@ -1,0 +1,31 @@
+
+Explanation for binary files inside source package according to
+
+  http://lists.debian.org/debian-devel/2013/09/msg00332.html
+
+Files: data/columb.polys.rda
+Documentation: man/columb.Rd
+
+  -> By district crime data from Columbus OH. Useful for illustrating
+     use of simple Markov Random Field smoothers.
+     
+     The data are adapted from the 'columbus' example in the 'spdep'
+     package, where the original source is given as:
+
+     Anselin, Luc. 1988. Spatial econometrics: methods and
+     models. Dordrecht: Kluwer Academic, Table 12.1 p. 189.
+
+Files: data/columb.polys.rda
+Documentation: man/columb.Rd
+
+  -> By district crime data from Columbus OH, together with polygons
+     describing district shape. Useful for illustrating use of simple
+     Markov Random Field smoothers.
+     
+     The data are adapted from the 'columbus' example in the 'spdep'
+     package, where the original source is given as:
+
+     Anselin, Luc. 1988. Spatial econometrics: methods and
+     models. Dordrecht: Kluwer Academic, Table 12.1 p. 189.
+
+ -- Dirk Eddelbuettel <edd@debian.org>, Tue, 29 Aug 2017 22:00:34 -0500
