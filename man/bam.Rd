@@ -22,7 +22,8 @@ bam(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,
     select=FALSE,scale=0,gamma=1,knots=NULL,sp=NULL,min.sp=NULL,
     paraPen=NULL,chunk.size=10000,rho=0,AR.start=NULL,discrete=FALSE,
     cluster=NULL,nthreads=1,gc.level=0,use.chol=FALSE,samfrac=1,
-    coef=NULL,drop.unused.levels=TRUE,G=NULL,fit=TRUE,drop.intercept=NULL,...)
+    coef=NULL,drop.unused.levels=TRUE,G=NULL,fit=TRUE,drop.intercept=NULL,
+    in.out=NULL,...)
 }
 %- maybe also `usage' for other objects documented here.
 
@@ -96,7 +97,8 @@ Different terms can use different numbers of knots, unless they share a covariat
  Smoothing parameters must be supplied in the order that the smooth terms appear in the model 
 formula. Negative elements indicate that the parameter should be estimated, and hence a mixture 
 of fixed and estimated parameters is possible. If smooths share smoothing parameters then \code{length(sp)} 
-must correspond to the number of underlying smoothing parameters.}
+must correspond to the number of underlying smoothing parameters. Note that \code{discrete=TRUE}may result in
+re-ordering of variables in tensor product smooths for improved efficiency, and \code{sp} must be supplied in re-ordered order.}
 
 \item{min.sp}{Lower bounds can be supplied for the smoothing parameters. Note
 that if this option is used then the smoothing parameters \code{full.sp}, in the 
@@ -124,7 +126,7 @@ section of AR1 correlation. Very first observation in data frame does not need t
 there are no breaks in AR1 correlaion.}
 
 \item{discrete}{with \code{method="fREML"} it is possible to discretize covariates for storage and efficiency reasons.
-If \code{discrete} is \code{TRUE}, a number or a vector of numbers for each smoother term, then discretization happens. If numbers are supplied they give the number of discretization bins.}
+If \code{discrete} is \code{TRUE}, a number or a vector of numbers for each smoother term, then discretization happens. If numbers are supplied they give the number of discretization bins. Parametric terms use the maximum number specified.}
 
 \item{cluster}{\code{bam} can compute the computationally dominant QR decomposition in parallel using \link[parallel:clusterApply]{parLapply}
 from the \code{parallel} package, if it is supplied with a cluster on which to do this (a cluster here can be some cores of a 
@@ -158,6 +160,8 @@ involving factor variables you might want to turn this off. Only do so if you kn
 
 \item{drop.intercept}{Set to \code{TRUE} to force the model to really not have the a constant in the parametric model part,
 even with factor variables present.}
+
+\item{in.out}{If supplied then this is a two item list of intial values. \code{sp} is initial smoothing parameter estiamtes and \code{scale} the initial scale parameter estimate (set to 1 if famiy does not have one).}
 
 \item{...}{further arguments for 
 passing on e.g. to \code{gam.fit} (such as \code{mustart}). }
@@ -201,12 +205,12 @@ The extended families given in \code{\link{family.mgcv}} can also be used. The e
 
 \references{
 Wood, S.N., Goude, Y. & Shaw S. (2015) Generalized additive models for large datasets. Journal of the Royal Statistical Society, Series C 64(1): 139-155.
-\url{https://rss.onlinelibrary.wiley.com/doi/full/10.1111/rssc.12068}
+\doi{10.1111/rssc.12068}
 
 Wood, S.N., Li, Z., Shaddick, G. & Augustin N.H. (2017) Generalized additive models for gigadata: modelling the UK black smoke network daily data. Journal of the American Statistical Association. 112(519):1199-1210
 \doi{10.1080/01621459.2016.1195744}
 
-Li, Z & S.N. Wood (2019) Faster model matrix crossproducts for large generalized linear models with discretized covariates. Statistics and Computing.
+Li, Z & S.N. Wood (2020) Faster model matrix crossproducts for large generalized linear models with discretized covariates. Statistics and Computing. 30:19-25
 \doi{10.1007/s11222-019-09864-2}
 
 }
@@ -219,10 +223,6 @@ Li, Z & S.N. Wood (2019) Faster model matrix crossproducts for large generalized
 \section{WARNINGS }{
 
 The routine may be slower than optimal if the default \code{"tp"} basis is used. 
-
-Unless discrete=TRUE, you must have more unique combinations of covariates than the model has total
-parameters. (Total parameters is sum of basis dimensions plus sum of non-spline 
-terms less the number of spline terms). 
 
 This routine is less stable than `gam' for the same dataset.
 

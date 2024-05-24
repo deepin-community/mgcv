@@ -144,13 +144,16 @@ cox.ph <- function (link = "identity") {
 	  a[,trind] <- matrix(oo$A[1:(p*nti)],p,nti)
 	  ## compute Schoenfeld resiudals, within stratum
           if (p) {
-            Xs <- X[ind,] <- (X[ind,,drop=FALSE] - apply(gamma[ind]*X[ind,],2,cumsum)/cumsum(gamma[ind]))*wt[ind]
+            Xs <- X[ind,] <- (X[ind,,drop=FALSE] - apply(gamma[ind]*X[ind,,drop=FALSE],2,cumsum)/cumsum(gamma[ind]))*wt[ind]
 	    n <- nrow(Xs)
 	    Rs <- apply(Xs[n:1,,drop=FALSE],2,cumsum)[n:1,,drop=FALSE] ## score residuals
 	    ## now remove the penalization induced drift...
-	    x <- (1:n)[wt[ind]!=0]; dx <- seq(1,0,length=sum(wt[ind]!=0))
-	    drift <- approx(x,dx,xout=1:n,method="constant",rule=2)$y
-	    Rs <- Rs - t(t(matrix(drift,n,ncol(R)))*Rs[1,])
+	    x <- (1:n)[wt[ind]!=0];
+	    if (length(x)) {
+	      dx <- seq(1,0,length=sum(wt[ind]!=0))
+	      drift <- approx(x,dx,xout=1:n,method="constant",rule=2)$y
+	      Rs <- Rs - t(t(matrix(drift,n,ncol(R)))*Rs[1,])
+	    }  
 	    R[ind,] <- Rs
 	  }  
         }
@@ -274,7 +277,8 @@ cox.ph <- function (link = "identity") {
       g <- rep(0,p);H <- rep(0,p*p)
       if (deriv > 0) {
         M <- ncol(d1b)
-        d1H <- if (deriv==1) rep(0,p*M) else rep(0,p*p*M)
+        d1H <- #if (deriv==1) rep(0,p*M) else
+	       rep(0,p*p*M)
       } else M <- d1Ho <- d1H <- 0
       if (deriv > 2) {
         d2H <- rep(0,p*M*(M+1)/2)

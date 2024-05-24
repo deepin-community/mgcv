@@ -8,7 +8,7 @@
    as well.}
 \usage{
 \method{plot}{gam}(x,residuals=FALSE,rug=NULL,se=TRUE,pages=0,select=NULL,scale=-1,
-         n=100,n2=40,n3=3,pers=FALSE,theta=30,phi=30,jit=FALSE,xlab=NULL,
+         n=100,n2=40,n3=3,theta=30,phi=30,jit=FALSE,xlab=NULL,
          ylab=NULL,main=NULL,ylim=NULL,xlim=NULL,too.far=0.1,
          all.terms=FALSE,shade=FALSE,shade.col="gray80",shift=0,
          trans=I,seWithMean=FALSE,unconditional=FALSE,by.resids=FALSE,
@@ -57,8 +57,6 @@ Set to 0 to have the routine leave all graphics settings as they are. }
 \item{n2}{Square root of number of points used to grid estimates of 2-d
   functions for contouring.}
 \item{n3}{Square root of number of panels to use when displaying 3 or 4 dimensional functions.}
-\item{pers}{Set to \code{TRUE} if you want perspective plots for 2-d
-  terms.}
 
 \item{theta}{One of the perspective plot angles.}
 
@@ -84,7 +82,7 @@ interpretation of plots.}
 
 \item{all.terms}{if set to \code{TRUE} then the partial effects of parametric
 model components are also plotted, via a call to \code{\link{termplot}}. Only
-terms of order 1 can be plotted in this way.}
+terms of order 1 can be plotted in this way. Also see warnings.}
 
 \item{shade}{Set to \code{TRUE} to produce shaded regions as confidence bands
 for smooths (not avaliable for parametric terms, which are plotted using \code{termplot}).}
@@ -207,7 +205,7 @@ supporting data.
 
 Plots of 2-D smooths with standard error contours shown can not easily be customized.
 
-The function can not deal with smooths of more than 2 variables!
+\code{all.terms} uses \code{\link{termplot}} which looks for the original data in the environment of the fitted model object formula. Since \code{gam} resets this environment to avoid large saved model objects containing data in hidden environments, this can fail. 
 } 
 
 \seealso{  \code{\link{gam}}, \code{\link{predict.gam}}, \code{\link{vis.gam}}}
