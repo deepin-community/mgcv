@@ -39,7 +39,7 @@ USA.*/
 
 
 
-matrix addconQT(Q,T,a,u) matrix *Q,T,a,*u;
+matrix addconQT(matrix *Q,matrix T,matrix a,matrix *u)
 
 /* A constraint, a (a row vector), is added to the QT factorization of
    the working set. T must have been initialised square, and then had T.r
@@ -419,7 +419,7 @@ void QPCLS(matrix *Z,matrix *X, matrix *p, matrix *y,matrix *Ain,matrix *b,matri
 */
 
 { matrix Q,T,Rf,PX,Py,a,P,p1,s,c,Xy,y1,u,Pd,pz,pk;
-  int k,i,j,tk,*I,*ignore,iter=0,*fixed,*delog,maxdel=100;
+  int k,i,j,tk,*I,*ignore,*fixed,*delog,maxdel=100;
   double x;
   I=(int *)CALLOC((size_t) p->r,sizeof(int)); /* I[i] is the row of Ain containing ith active constraint */
   fixed=(int *)CALLOC((size_t) p->r,sizeof(int)); /* fixed[i] is set to 1 when the corresponding inequality constraint is to be left in regardless of l.m. estimate */
@@ -456,9 +456,7 @@ void QPCLS(matrix *Z,matrix *X, matrix *p, matrix *y,matrix *Ain,matrix *b,matri
   Pd=initmat(y->r,1);pz=initmat(p->r,1);pk=initmat(p->r,1);
   tk=0;             /* The number of inequality constraints currently active */
   /*printf("\nLSQ");*/
-  while(1)
-  { iter++;
-    /* Form Pd=Py-PXp and minimize ||R pz - Pd|| */
+  while(1) { /* Form Pd=Py-PXp and minimize ||R pz - Pd|| */
     vmult(&PX,p,&Pd,0); /* Pd = PXp */
     for (i=0;i<Pd.r;i++) Pd.V[i] = Py.V[i]-Pd.V[i]; /* Pd=P(y-Xp) */
     Rf.c=Rf.r=p->r-tk-Af->r; /* Restrict attention to QR factor of PXZ */
@@ -512,7 +510,7 @@ void QPCLS(matrix *Z,matrix *X, matrix *p, matrix *y,matrix *Ain,matrix *b,matri
       }
     }
   }
-}
+} /* QPCLS */
 
 
 void PCLS(matrix *X,matrix *p,matrix *y,matrix *w,matrix *Ain,matrix *b,
@@ -547,7 +545,7 @@ void PCLS(matrix *X,matrix *p,matrix *y,matrix *w,matrix *Ain,matrix *b,
 
 { int i,j,k,n;
   matrix z,F,W,Z,B;
-  double x,xx,*p1,*C;
+  double *p1,*C;
  
   /* form transformed data vector z */
   if (m>0) z=initmat(y->r+p->r,1);else z=initmat(y->r,1);
@@ -564,32 +562,21 @@ void PCLS(matrix *X,matrix *p,matrix *y,matrix *w,matrix *Ain,matrix *b,
     C = (double *)CALLOC((size_t)(n*n),sizeof(double));
     for (k=0;k<m;k++) for (i=0;i<S[k].r;i++) for (j=0;j<S[k].c;j++)
 					       C[i+off[k]+n*(j+off[k])] += theta[k]*S[k].M[i][j];
-    //B.M[i+off[k]][j+off[k]]+=theta[k]*S[k].M[i][j];
     /* and find a square root of B..... */
-
-    //root(&B,&C,8*DOUBLE_EPS); // CC' = S_tot (min cols)
     k = -1;
     mroot(C,&k,&n); // C'C = S_tot (min rows - returned in k)
     /* copy C into the last p->r rows of F */
     for (p1=C,i=0;i<n;i++) for (j=0;j<k;j++,p1++) F.M[j+X->r][i] = *p1;
-    /* copy C' into the last p->r rows of F */
-    //for (i=0;i<C.r;i++) for (j=0;j<C.c;j++) F.M[j+X->r][i]=C.M[i][j];
     FREE(C);
-    //freemat(B);//freemat(C);
   }
   /*  printf("\ncond(F)=%g",condition(F));*/
   /* Which means that the problem is now in a form where QPCLS can solve it.... */
   QPCLS(&Z,&F,p,&z,Ain,b,Af,active); /* note that at present Z is full not HH */
-  //  if (H->r==y->r) /* then calculate the influence matrix XZ(Z'F'FZ)^{-1}Z'X'W */
-  //{ freemat(W);W=initmat(Z.c,Z.c);
-  //  multi(4,W,Z,F,F,Z,1,1,0,0);invert(&W); /* Wildly inefficient!! */
-  //  multi(5,*H,*X,Z,W,Z,*X,0,0,0,1,1);      /* ditto */
-  //  for (i=0;i<H->r;i++) for (j=0;j<H->c;j++) H->M[i][j]*=w->V[j];
-  //}
   /* working out value of objective at minimum */
   B=initmat(z.r,1);matmult(B,F,*p,0,0);
-  xx=0.0;for (i=0;i<z.r;i++) { x=B.V[i]-z.V[i];xx+=x*x;}
-  /*printf("\nObjective at Minimum = %g\n",xx);*/ freemat(B);
+  /*xx=0.0;for (i=0;i<z.r;i++) { x=B.V[i]-z.V[i];xx+=x*x;}
+    printf("\nObjective at Minimum = %g\n",xx);*/
+  freemat(B);
   /* freeing storage .... */
   freemat(F);freemat(z);freemat(W);freemat(Z);
 }

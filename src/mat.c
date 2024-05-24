@@ -50,6 +50,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <float.h>
 
 #ifdef _OPENMP // needs to precede R.h (and mgcv.h)
 #include <omp.h>
@@ -457,6 +458,34 @@ void mgcv_mmult(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int 
 		B, &lda,C, &ldb,&beta, A, &ldc FCONE FCONE);
 } /* end mgcv_mmult */
 
+SEXP mrow_sum(SEXP x,SEXP M, SEXP K) {
+/* X is n by p matrix, m and k are integer vectors   
+   B is m[length(m)-1] by p output matrix.
+   B[i,] is sum of X[k[j],] for j in m[i-1]:(m[i]-1) (m[-1]=0) 
+   .Called from mat.rowsum
+*/
+  int i,j,p,n,nm,*m,*k,*kp,*p1;
+  double *X,xx,*B;
+  SEXP b;
+  nm = length(M);
+  X = REAL(x);
+  M = PROTECT(coerceVector(M,INTSXP));
+  K = PROTECT(coerceVector(K,INTSXP)); /* otherwise R might be storing as double on entry */
+  m = INTEGER(M); k = INTEGER(K);
+  p = ncols(x); n = nrows(x);
+  b = PROTECT(allocMatrix(REALSXP,nm,p));
+  B = REAL(b);
+  for (j=0;j<p;j++,X+=n) {
+    for (kp=k,i=0;i<nm;i++) {
+      for(xx=0.0,p1=k+m[i];kp<p1;kp++) xx += X[*kp];
+      *B = xx;B++;
+    }  
+  }  
+  UNPROTECT(3);
+  return(b); 
+} /* mrow_sum */  
+
+
 SEXP mgcv_madi(SEXP a, SEXP b,SEXP ind,SEXP diag) {
 /* Performs 
      a[ind,ind] <- a[ind,ind] + b
@@ -565,7 +594,7 @@ int mgcv_bchol0(double *A,int *piv,int *n,int *nt,int *nb) {
         x = *Aj - *pd; 
         if (x>xmax) { xmax = x;q=l;} /* find the pivot */
       } 
-      if (j==0) tol = *n * xmax * DOUBLE_EPS;
+      if (j==0) tol = *n * xmax * DBL_EPSILON;
       Aq = A + *n * q + q;
       // Rprintf("\n n = %d k = %d j = %d  q = %d,  A[q,q] = %g  ",*n,k,j,q,*Aq);
       if (*Aq - dots[q]<tol) {r = j;break;} /* note Lucas (2004) has 'dots[q]' missing */
@@ -691,7 +720,7 @@ int mgcv_bchol(double *A,int *piv,int *n,int *nt,int *nb) {
         x = *Aj - *pd; 
         if (x>xmax) { xmax = x;q=l;} /* find the pivot q >= j (leading diag only used)*/
       } 
-      if (j==0) tol = *n * xmax * DOUBLE_EPS;
+      if (j==0) tol = *n * xmax * DBL_EPSILON;
       Aq = A + *n * q + q; 
       if (*Aq - dots[q]<tol) {r = j;break;} /* note Lucas (2004) has 'dots[q]' missing */
       /* swap dots... */
@@ -818,7 +847,7 @@ int mgcv_pchol(double *A,int *piv,int *n,int *nt) {
     Ak = A + kn + k;x = *Ak;q=k;Ak+=n1;
     for (i=k+1;i < *n;i++,Ak+=n1) if (*Ak>x) {x = *Ak;q=i;}
     qn = q * *n;
-    if (k==0) thresh = *n * x * DOUBLE_EPS;
+    if (k==0) thresh = *n * x * DBL_EPSILON;
     if (x>thresh) { /* A[q,q] =x > 0 */
       r++;
       /* piv[k] <-> piv[q] */
@@ -956,7 +985,7 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
 #ifdef OMP_REPORT
   Rprintf("bpqr...");
 #endif
-  tol = pow(DOUBLE_EPS,.8);
+  tol = pow(DBL_EPSILON,.8);
   mb = (int *)CALLOC((size_t) nt,sizeof(int));
   kb = (int *)CALLOC((size_t) nt,sizeof(int));  
   for (p0=piv,i=0;i<p;i++,p0++) *p0 = i; /* initialize pivot index */
@@ -1821,11 +1850,11 @@ void chol_up(double *R,double *u, int *n,int *up,double *eps) {
    Givens rotations are of form [c,-s] where c = cos(theta), s = sin(theta). 
                                 [s,c]
 
-   Currently does not check that result of down date is positive definite. 
- 
    Assumes R upper triangular, and that it is OK to use first two columns 
    below diagonal as temporary strorage for Givens rotations (the storage is 
    needed to ensure algorithm is column oriented). 
+
+   For downdate returns a negative value in R[1] (R[1,0]) if not +ve definite.
 */ 
   double c0,s0,*c,*s,z,*x,z0,*c1;
   int j,j1,n1;
@@ -3620,7 +3649,8 @@ void Rlanczos(double *A,double *U,double *D,int *n, int *m, int *lm,double *tol,
   FREE(z);
   FREE(err);
   if (vlength) FREE(v);
-  for (i=0;i< *n+1;i++) if (q[i]) FREE(q[i]);FREE(q);  
+  for (i=0;i< *n+1;i++) if (q[i]) FREE(q[i]);
+  FREE(q);  
   *n = j; /* number of iterations taken */
   #ifdef OMP_REPORT
   Rprintf("done\n");

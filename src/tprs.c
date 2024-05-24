@@ -19,6 +19,7 @@ USA.*/
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
+#include <float.h>
 #include "mgcv.h"
 #include "matrix.h"
 #include "general.h"
@@ -32,9 +33,10 @@ USA.*/
 
 double eta_const(int m,int d) {
   /* compute the irrelevant constant for TPS basis */
-  double pi=PI,Ghalf; 
+  double pi,Ghalf; 
   double f;
   int i,k,d2,m2;
+  pi=asin(1.0)*2;
   Ghalf = sqrt(pi); /* Gamma function of 0.5 = sqrt(pi) */
   d2 = d/2;m2 = 2*m;
   if (m2 <= d) error(_("You must have 2m>d for a thin plate spline."));
@@ -355,7 +357,7 @@ void tprs_setup(double **x,double **knt,int m,int d,int n,int k,int constant,mat
 { matrix X1,E,U,v,TU,T,Z,p;
   const char trans='T'; 
   int l,i,j,M,*yxindex,pure_knot=0,nk,minus=-1,kk,one=1;
-  double w,*xc,*XMi,*Ea,*Ua,tol=DOUBLE_EPS,*b,*a,*uz,alpha=1.0,beta=0.0,*p0,*p1;
+  double w,*xc,*XMi,*Ea,*Ua,tol=DBL_EPSILON,*b,*a,*uz,alpha=1.0,beta=0.0,*p0,*p1;
   tol = pow(tol,.7);
 
   if (n_knots<k) /* then use the covariate points as knots */
